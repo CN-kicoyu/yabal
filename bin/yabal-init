@@ -1,0 +1,90 @@
+#!/usr/bin/env node
+
+const inquirer = require('inquirer')
+const tempConfig = require('../lib/tempConfig.js')
+const logger = require('../lib/logger.js')
+const chalk = require('chalk')
+const rm = require('rimraf').sync
+const { localTemplatePath } = require('../lib/utils')
+const generate = require('../lib/generate.js')
+const ora = require('ora')
+const path = require('path')
+const fs = require('fs')
+
+console.log()
+process.on('exit', () => {
+  console.log()
+})
+
+const datas = Object.keys(tempConfig.configData)
+
+if (datas.length) {
+  const list = Object.keys(tempConfig.configData).map((item) => ({name: tempConfig.configData[item].name}))
+  const question = [
+    {
+      type: 'list',
+      message: 'Select the templates which you want to init',
+      default: {name: 'cancel'},
+      name: 'template',
+      choices: [
+        {name: 'cancel', checked: true}, 
+        new inquirer.Separator('= Available template list = ')
+      ].concat(list)
+    },
+    {
+      type: "input",
+      message: "Project name",
+      name: "name",
+      when: function(answers) { 
+        return answers.template !== 'cancel'
+      },
+      validate: function(answer) {
+        if (answer.length < 1) {
+          return 'You must be entry project name';
+        }
+        return true;
+      }
+    }
+  ]
+  inquirer.prompt(question).then(answers => {
+    if (answers.name) {
+      const projectPath = answers.name.indexOf('/') > -1 ? `${process.cwd()}${answers.name}` : process.cwd()
+      const buildDir = fs.existsSync(projectPath) && fs.readdirSync(projectPath)
+      if (buildDir && buildDir.length) {
+        inquirer.prompt([{
+          type: "confirm",
+          message: "Target directory exists. Do you want to save current files",
+          name: "save"
+        }, {
+          type: "confirm",
+          message: "current files will be clean, Do you sure to do that",
+          name: "clean",
+          when: function(answers) { 
+            return !answers.save
+          },
+        }]).then(clean => {
+          run({...answers, ...clean}, projectPath)
+        })
+      } else {
+        run(answers, projectPath)
+      }
+    }
+  })
+} else {
+  logger.success('Please download new template before use!')
+}
+
+
+function run (info, projectPath) {
+  const template = localTemplatePath(tempConfig.findTempleName(info.template))
+  const name = info.name
+  generate(name, template, projectPath, !!info.clean, err => {
+    console.log()
+    if (err) {
+      logger.fatal(err.message.trim())
+    }
+    console.log()
+    logger.success('Successed to Generated template "%s".', info.template)
+  })
+}
+

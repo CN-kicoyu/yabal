@@ -1,0 +1,53 @@
+#!/usr/bin/env node
+
+const inquirer = require('inquirer')
+const tempConfig = require('../lib/tempConfig.js')
+const logger = require('../lib/logger.js')
+const chalk = require('chalk')
+const rm = require('rimraf').sync
+
+console.log()
+process.on('exit', () => {
+  console.log()
+})
+
+const datas = Object.keys(tempConfig.configData)
+
+if (datas.length) {
+  const list = Object.keys(tempConfig.configData).map((item) => ({name: tempConfig.configData[item].name}))
+  const question = [
+    {
+      type: 'checkbox',
+      message: 'Select the templates which you want to delete',
+      default: {name: 'cancel'},
+      name: 'templates',
+      choices: [
+        new inquirer.Separator(' = Available template list = ')
+      ].concat(list)
+    },
+    {
+      type: "confirm",
+      message: "make sure to delete this templates",
+      name: "delete",
+      when: function(answers) { 
+        return answers.templates.length > 0
+      }
+    }
+  ]
+  inquirer.prompt(question).then(answers => {
+    if (answers.templates.length > 0 && answers.delete) {
+      answers.templates.forEach((item) => {
+        tempConfig.deleteFile(item)
+        console.log()
+        logger.success('Successed to delete ' + chalk.redBright(item))
+      })
+    } else {
+      console.log()
+      logger.success('None to select')
+    }
+  })
+} else {
+  logger.success('No available template has been')
+}
+
+

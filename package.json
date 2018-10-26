@@ -1,0 +1,48 @@
+{
+  "name": "yabal",
+  "version": "1.0.1",
+  "description": "Generate files and configurability of project",
+  "bin": {
+    "yabal": "bin/yabal",
+    "yabal-down": "bin/yabal-down",
+    "yabal-list": "bin/yabal-list",
+    "yabal-delete": "bin/yabal-delete",
+    "yabal-init": "bin/yabal-init"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/CN-kicoyu/yabal.git"
+  },
+  "keywords": [
+    "template",
+    "templates",
+    "generate",
+    "project",
+    "CLI",
+    "cli",
+    "yabal"
+  ],
+  "bugs": {
+    "url": "https://github.com/CN-kicoyu/yabal/issues"
+  },
+  "homepage": "https://github.com/CN-kicoyu/yabal#readme",
+  "author": "kicoyu < kicoyu@126.com >",
+  "license": "MIT",
+  "dependencies": {
+    "async": "^2.6.1",
+    "chalk": "^2.4.1",
+    "commander": "^2.19.0",
+    "consolidate": "^0.15.1",
+    "download-git-repo": "^1.1.0",
+    "ejs": "^2.6.1",
+    "inquirer": "^6.2.0",
+    "metalsmith": "^2.3.0",
+    "mkdirp": "^0.5.1",
+    "ora": "^3.0.0",
+    "rimraf": "^2.6.2",
+    "user-home": "^2.0.0"
+  }
+}

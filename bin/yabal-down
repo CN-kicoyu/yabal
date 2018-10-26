@@ -1,0 +1,69 @@
+#!/usr/bin/env node
+
+const inquirer = require('inquirer')
+const download = require('download-git-repo')
+const program = require('commander')
+const tempConfig = require('../lib/tempConfig.js')
+const logger = require('../lib/logger.js')
+const chalk = require('chalk')
+const ora = require('ora')
+const rm = require('rimraf').sync
+const exists = require('fs').existsSync
+const { localTemplatePath, templatePackage } = require('../lib/utils')
+
+program
+  .usage('[owner/name]')
+  .option('-c, --clone', 'use git clone')
+    
+program.on('--help', function () {
+  console.log()
+  console.log('Examples:')
+  console.log()
+  console.log(chalk.yellow('    # yabal down owner/name'))
+  console.log('    $ yabal down CN-kicoyu/yus-cli-template-multi-vue')
+  console.log()
+})
+
+function help () {
+  program.parse(process.argv)
+  if (program.args.length < 1) return program.help()
+}
+help()
+
+console.log()
+process.on('exit', () => {
+  console.log()
+})
+
+const template = program.args[0]
+const temp = localTemplatePath(template)
+const clone = program.clone || false
+run()
+
+function run () {
+  const spinner = ora('downloading template').start()
+  if (exists(temp)) rm(temp)
+  download(template, temp, { clone }, err => {
+    if (err) {
+      tempConfig.deleteData(template)
+      console.log()
+      spinner.fail('Failed to download repo ' + template + ': ')
+      console.log()
+      logger.fatal(err.message.trim())
+    }
+    
+    const pkg = templatePackage(template)
+
+    tempConfig.updataConfig({
+      [template]: {
+        "name": pkg.name,
+        "version": pkg.version,
+        "description": pkg.description
+      }
+    })
+
+    spinner.succeed()
+    console.log()
+    logger.success('Successed to download template "%s".', pkg.name)
+  })
+}

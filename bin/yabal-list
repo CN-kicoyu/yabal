@@ -1,0 +1,26 @@
+#!/usr/bin/env node
+
+const tempConfig = require('../lib/tempConfig.js')
+const chalk = require('chalk')
+const logger = require('../lib/logger.js')
+
+
+console.log()
+process.on('exit', () => {
+  console.log()
+})
+
+const configData = Object.keys(tempConfig.configData)
+if (configData.length) {
+  console.log('  ' + chalk.dim(configData.length + ' available templates'))
+  configData.forEach((item) => {
+    const tplData = tempConfig.configData[item];
+    console.log()
+		console.log('  ' + 
+			chalk.yellow('★') + 
+			'  ' + chalk.yellow(tplData.name) + 
+			' - ' + tplData.description);
+	})
+} else {
+  logger.success('No available template has been')
+}

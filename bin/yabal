@@ -1,0 +1,14 @@
+#!/usr/bin/env node
+
+const program = require('commander')
+const chalk = require('chalk')
+
+program
+  .version(require('../package.json').version)
+  .usage('<command> [options]')
+  .command('down', 'download new templates to local')
+  .command('list', 'list all available templates')
+  .command('delete', 'delete local templates')
+  .command('init', 'generate a new project from a template')
+
+program.parse(process.argv)
