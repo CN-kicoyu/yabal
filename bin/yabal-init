@@ -10,6 +10,14 @@ const generate = require('../lib/generate.js')
 const ora = require('ora')
 const path = require('path')
 const fs = require('fs')
+const program = require('commander')
+
+program
+  .option('-j, --json <list>', 'this json variables can be render', list)
+  .option('-p, --project <value>', 'render project')
+  .option('-c, --clean', 'clean project')
+
+program.parse(process.argv)
 
 console.log()
 process.on('exit', () => {
@@ -20,56 +28,60 @@ const datas = Object.keys(tempConfig.configData)
 
 if (datas.length) {
   const list = Object.keys(tempConfig.configData).map((item) => ({name: tempConfig.configData[item].name}))
-  const question = [
-    {
-      type: 'list',
-      message: 'Select the templates which you want to init',
-      default: {name: 'cancel'},
-      name: 'template',
-      choices: [
-        {name: 'cancel', checked: true}, 
-        new inquirer.Separator('= Available template list = ')
-      ].concat(list)
-    },
-    {
-      type: "input",
-      message: "Project name",
-      name: "name",
-      when: function(answers) { 
-        return answers.template !== 'cancel'
+  if (program.project) {
+    run({template: program.project, clean: !!program.clean}, process.cwd())
+  } else {
+    const question = [
+      {
+        type: 'list',
+        message: 'Select the templates which you want to init',
+        default: {name: 'cancel'},
+        name: 'template',
+        choices: [
+          {name: 'cancel', checked: true},
+          new inquirer.Separator('= Available template list = ')
+        ].concat(list)
       },
-      validate: function(answer) {
-        if (answer.length < 1) {
-          return 'You must be entry project name';
+      {
+        type: "input",
+        message: "Project name",
+        name: "name",
+        when: function(answers) {
+          return answers.template !== 'cancel'
+        },
+        validate: function(answer) {
+          if (answer.length < 1) {
+            return 'You must be entry project name';
+          }
+          return true;
         }
-        return true;
       }
-    }
-  ]
-  inquirer.prompt(question).then(answers => {
-    if (answers.name) {
-      const projectPath = answers.name.indexOf('/') > -1 ? `${process.cwd()}${answers.name}` : process.cwd()
-      const buildDir = fs.existsSync(projectPath) && fs.readdirSync(projectPath)
-      if (buildDir && buildDir.length) {
-        inquirer.prompt([{
-          type: "confirm",
-          message: "Target directory exists. Do you want to save current files",
-          name: "save"
-        }, {
-          type: "confirm",
-          message: "current files will be clean, Do you sure to do that",
-          name: "clean",
-          when: function(answers) { 
-            return !answers.save
-          },
-        }]).then(clean => {
-          run({...answers, ...clean}, projectPath)
-        })
-      } else {
-        run(answers, projectPath)
+    ]
+    inquirer.prompt(question).then(answers => {
+      if (answers.name) {
+        const projectPath = answers.name.indexOf('/') > -1 ? `${process.cwd()}${answers.name}` : process.cwd()
+        const buildDir = fs.existsSync(projectPath) && fs.readdirSync(projectPath)
+        if (buildDir && buildDir.length) {
+          inquirer.prompt([{
+            type: "confirm",
+            message: "Target directory exists. Do you want to save current files",
+            name: "save"
+          }, {
+            type: "confirm",
+            message: "current files will be clean, Do you sure to do that",
+            name: "clean",
+            when: function(answers) {
+              return !answers.save
+            },
+          }]).then(clean => {
+            run({...answers, ...clean}, projectPath)
+          })
+        } else {
+          run(answers, projectPath)
+        }
       }
-    }
-  })
+    })
+  }
 } else {
   logger.success('Please download new template before use!')
 }
@@ -78,7 +90,7 @@ if (datas.length) {
 function run (info, projectPath) {
   const template = localTemplatePath(tempConfig.findTempleName(info.template))
   const name = info.name
-  generate(name, template, projectPath, !!info.clean, err => {
+  generate(name, template, projectPath, !!info.clean, program.json, err => {
     console.log()
     if (err) {
       logger.fatal(err.message.trim())
@@ -88,3 +100,12 @@ function run (info, projectPath) {
   })
 }
 
+function list (val) {
+  let extraVar = null
+  try {
+    extraVar = val && JSON.parse(val)
+  } catch (err) {
+    extraVar = null
+  }
+  return extraVar
+}

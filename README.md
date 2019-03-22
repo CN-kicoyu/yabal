@@ -19,7 +19,7 @@ $ yabal down <owner/name>
 样例:
 
 ``` bash
-$ yus down CN-kicoyu/yus-cli-template-miniapp
+$ yabal down CN-kicoyu/yus-cli-template-miniapp
 ```
 
 > 支持下载:<br/>
